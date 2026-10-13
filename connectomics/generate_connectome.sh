@@ -5,13 +5,27 @@
 # Date: 16th May 2019
 #
 # Usage:
-#   ./structural_connectome.sh VIPD_007
+#   ./generate_connectome.sh [participants.txt]
+#   Place one participant pseudocode per line; skip blank lines and # comments.
 
 set -e
 
-t="$1"
+PARTICIPANTS_FILE="${1:-participants.txt}"
+if [[ ! -f "$PARTICIPANTS_FILE" ]]; then
+    echo "Missing participant list: $PARTICIPANTS_FILE" >&2
+    exit 1
+fi
+mapfile -t PARTICIPANTS < <(awk 'NF && $1 !~ /^#/ {print $1}' "$PARTICIPANTS_FILE")
+if (( ${#PARTICIPANTS[@]} == 0 )); then
+    echo "No participant IDs found in $PARTICIPANTS_FILE" >&2
+    exit 1
+fi
 
-BASE="/home/skgtaza/Scratch/MRI_data_1/${t}"
+# HARD-CODED MYRIAD PATH: replace with your own MRI_data_1 location.
+DATA_ROOT="/home/skgtaza/Scratch/MRI_data_1"
+
+for t in "${PARTICIPANTS[@]}"; do
+BASE="${DATA_ROOT}/${t}"
 
 echo "Processing ${t}"
 
@@ -131,3 +145,4 @@ tck2connectome \
     -force
 
 echo "Finished ${t}"
+done
