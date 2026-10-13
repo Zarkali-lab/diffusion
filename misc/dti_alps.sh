@@ -1,5 +1,6 @@
-##!/bin/bash
+#!/bin/bash
 
+# HARD-CODED MYRIAD PATH: replace NIFTYREG_INSTALL for your cluster install.
 export NIFTYREG_INSTALL=~/Scratch/niftyreg/niftyreg_install/
 PATH=${PATH}:${NIFTYREG_INSTALL}/bin
 LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${NIFTYREG_INSTALL}/lib
@@ -7,12 +8,26 @@ export PATH
 export LD_LIBRARY_PATH
 export DYLD_LIBRARY_PATH=${LD_LIBRARY_PATH}
 
+# HARD-CODED RELATIVE PATH: replace atlas path if using a different layout.
 float=../../atlases/MNI152_T1_1mm.nii.gz
 
+# HARD-CODED RELATIVE PATH: replace ROI paths if using a different layout.
 rois="alps/ROIs_JHU_ALPS/L_SCR.nii.gz,alps/ROIs_JHU_ALPS/R_SCR.nii.gz,alps/ROIs_JHU_ALPS/L_SLF.nii.gz,alps/ROIs_JHU_ALPS/R_SLF.nii.gz"
 
-for j in  `awk '{print $1}' Participants_Session1.txt` ; do
+PARTICIPANTS_FILE="${1:-participants.txt}"
+if [[ ! -f "$PARTICIPANTS_FILE" ]]; then
+    echo "Missing participant list: $PARTICIPANTS_FILE" >&2
+    exit 1
+fi
+mapfile -t PARTICIPANTS < <(awk 'NF && $1 !~ /^#/ {print $1}' "$PARTICIPANTS_FILE")
+if (( ${#PARTICIPANTS[@]} == 0 )); then
+    echo "No participant IDs found in $PARTICIPANTS_FILE" >&2
+    exit 1
+fi
 
+for j in "${PARTICIPANTS[@]}"; do
+
+# HARD-CODED RELATIVE PATH: update VIPD_LongDiffusion/SESSION1 layout if needed.
 cd VIPD_LongDiffusion/SESSION1/${j}
 
 # FIT TENSOR
