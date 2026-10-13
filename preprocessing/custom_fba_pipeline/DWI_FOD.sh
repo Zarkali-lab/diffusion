@@ -20,6 +20,7 @@ subject_path=$home_dir/${ID}/
 ID=$1
 home_dir=$2
 subject_path=$home_dir/${ID}/
+# HARD-CODED MYRIAD PATH: replace with your own FOD output directory before running.
 path_FINAL="/home/skgtaza/Scratch/DWI/${ID}/NODDI/FINAL"
 
 cd ${path_FINAL}

@@ -4,6 +4,20 @@
 #### Author: A. Zarkali
 #### Date: 04/02/2023
 
+# Participant IDs for template construction (STEP 1) come from a local text file,
+# one ID per line. Blank lines and lines starting with # are ignored.
+# This is the selected template subset, not necessarily all longitudinal participants.
+PARTICIPANTS_FILE="${PARTICIPANTS_FILE:-participants.txt}"
+if [[ ! -f "$PARTICIPANTS_FILE" ]]; then
+    echo "Missing participant list: $PARTICIPANTS_FILE" >&2
+    exit 1
+fi
+mapfile -t All < <(awk 'NF && $1 !~ /^#/ {print $1}' "$PARTICIPANTS_FILE")
+if (( ${#All[@]} == 0 )); then
+    echo "No participant IDs found in $PARTICIPANTS_FILE" >&2
+    exit 1
+fi
+
 #### FBA pipeline for version 3.0.4 https://mrtrix.readthedocs.io/en/3.0.4/fixel_based_analysis/mt_fibre_density_cross-section.html 
 
 
@@ -11,6 +25,7 @@
 
 #### Parameters
 
+# STEP 0 uses a separate full-cohort list, not the STEP 1 template subset.
 for j in `awk '{print $1}' Allparticipants_Session3.txt` ; do
 
 cd ${j}
@@ -18,13 +33,18 @@ cd ${j}
 echo ${j}
 
 #### Make directories
+# HARD-CODED MYRIAD PATH: replace /home/skgtaza/Scratch/VIPD_LongDiffusion
+# with your own cluster project directory before running this step.
 mkdir /home/skgtaza/Scratch/VIPD_LongDiffusion/SESSION1/${j}
 mkdir /home/skgtaza/Scratch/VIPD_LongDiffusion/SESSION2/${j}
 mkdir /home/skgtaza/Scratch/VIPD_LongDiffusion/SESSION3/${j}
 
+# HARD-CODED MYRIAD PATH: replace ~/Scratch/VIPD_LongDiffusion as needed.
 cd ~/Scratch/VIPD_LongDiffusion
 
 #### Copy data
+# HARD-CODED STORAGE PATHS: replace ssh.rd.ucl.ac.uk and /rd/live/... with
+# your current research-data location before running these transfers.
 # session 1
 scp -r ssh.rd.ucl.ac.uk:/rd/live/ritd-ag-project-rd00hy-rswei70/home_study_2017_data/AZ_Fixels/SESSION1/${j}/NODDI/FINAL/\{wmfod_norm.mif, mask_dwi_unbiased_upsampled.mif\} /SESSION1/${j}/
 # session 2
@@ -37,14 +57,14 @@ done
 ####------------------------------------------------------------------------------------------- STEP 1 - RIGID REGISTRATION of random subjects ------------------------------------------------------------------------------------------------ 
 
 # Random subjects (10 controls, 10 PD low vis, 10 PD high vis)
-All=("VIPD_104" "VIPD_078" "VIPD_111" "VIPD_126" "VIPD_145" "VIPD_167" "VIPD_234" "VIPD_017" "VIPD_404" "VIPD_068" "VIPD_131" "VIPD_132" "VIPD_039" "VIPD_264" "VIPD_216" "VIPD_051" "VIPD_238" "VIPD_156" "VIPD_504" "VIPD_200" "VIPD_124" "VIPD_158" "VIPD_172" "VIPD_186" "VIPD_188" "VIPD_197" "VIPD_223" "VIPD_251" "VIPD_266" "VIPD_256")
+# Template subset loaded from PARTICIPANTS_FILE above; do not embed subject IDs here.
 
 mkdir TEMPLATE
 mkdir TEMPLATE/FINAL
 mkdir TEMPLATE/MASK
 
 # Register all 3 visits
-for t in ${All[@]}
+for t in "${All[@]}"
 do
 
 mkdir TEMPLATE/${t}
@@ -151,6 +171,8 @@ fixelfilter fdc_SESSION1 smooth fdc_smooth_SESSION1 -matrix matrix/
 # Parameters
 t=$1 # first argument when calling the script
 
+# HARD-CODED MYRIAD PATH: replace ~/Scratch/VIPD_LongDiffusion as needed.
+# Relative SESSION*/TEMPLATE/atlases paths below assume this project layout.
 cd ~/Scratch/VIPD_LongDiffusion
 
 session1=SESSION1/${ID}/wmfod_norm.mif
